@@ -1,0 +1,1 @@
+# project-template-vagrant-with-ansible
