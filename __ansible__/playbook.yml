@@ -1,0 +1,69 @@
+- hosts: localhost
+  sudo: yes
+  tasks:
+    - name: install libselinux-python
+      yum: name=libselinux-python state=latest
+
+    - name: install apache
+      yum: name=httpd state=latest
+
+    - name: start apache and enabled
+      service: name=httpd state=started enabled=yes
+
+    - name: copy config file (enable SSI)
+      copy: src=/vagrant/__apache__/httpd.conf dest=/etc/httpd/conf/httpd.conf owner=vagrant
+
+    - name: install modules
+      yum: name={{item}} state=latest
+      with_items:
+        - php
+        - php-mbstring
+        - php-curl
+        - php-mysql
+        - nodejs
+        - npm
+        - ruby
+        - sendmail
+
+    - name: set php timezone
+      replace: >
+        dest=/etc/php.ini
+        regexp="^;date\.timezone ="
+        replace="date.timezone = Asia/Tokyo"
+
+    - name: set max upload filesize
+      replace: >
+        dest=/etc/php.ini
+        regexp="^upload_max_filesize = 2M"
+        replace="upload_max_filesize = 25M"
+
+    # - name: install mysql
+    #   yum: name={{item}} state=latest
+    #   with_items:
+    #     - mysql-server
+    #     - MySQL-python
+    #     - phpmyadmin
+
+    # - name: copy config file (set database charset)
+    #   copy: src=/vagrant/__mysql__/my.cnf dest=/etc/my.cnf owner=vagrant
+
+    # - name: copy config file (link to phpmyadmin)
+    #   copy: src=/vagrant/__mysql__/phpMyAdmin.conf dest=/etc/httpd/conf.d/phpMyAdmin.conf owner=vagrant
+    #   notify:
+    #     - restart apache
+    #     - restart mysql
+
+    # - name: start mysql and enabled
+    #   service: name=mysqld state=started enabled=yes
+
+    # - name: create a user
+    #   mysql_user: name=dbuser password=dbpass state=present
+
+    # - name: start sendmail
+    #   command: /etc/init.d/sendmail start
+
+  handlers:
+      - name: restart apache
+        service: name=httpd state=restarted
+      - name: restart mysql
+        service: name=mysqld state=restarted
